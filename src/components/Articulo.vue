@@ -2,7 +2,7 @@
     <v-layout align-start>
         <v-flex>
             <v-toolbar flat color="white">
-                <v-toolbar-title>Categorías</v-toolbar-title>
+                <v-toolbar-title>Artículos</v-toolbar-title>
                 <v-divider
                 class="mx-2"
                 inset
@@ -23,8 +23,20 @@
                         <v-card-text>
                             <v-container grid-list-md>
                                 <v-layout wrap>
+                                    <v-flex xs12 sm12 md6>
+                                        <v-text-field v-model="codigo" label="Código"></v-text-field>
+                                    </v-flex>
+                                    <v-flex xs12 sm12 md6>
+                                        <v-select v-model="idcategoria" :items="categorias" label="Categoría"></v-select>
+                                    </v-flex>
                                     <v-flex xs12 sm12 md12>
                                         <v-text-field v-model="nombre" label="Nombre"></v-text-field>
+                                    </v-flex>
+                                    <v-flex xs12 sm12 md6>
+                                        <v-text-field type="number" v-model="stock" label="Stock"></v-text-field>
+                                    </v-flex>
+                                    <v-flex xs12 sm12 md6>
+                                        <v-text-field type="number" v-model="precio_venta" label="Precio de venta"></v-text-field>
                                     </v-flex>
                                     <v-flex xs12 sm12 md12>
                                         <v-text-field v-model="descripcion" label="Descripción"></v-text-field>
@@ -59,7 +71,7 @@
             </v-toolbar>
             <v-data-table
                 :headers="headers"
-                :items="categories"
+                :items="articulos"
                 :search="search"
                 class="elevation-1"
             >
@@ -80,6 +92,10 @@
                         </v-icon>
                     </td>
                     <td>{{ props.item.nombre }}</td>
+                    <td>{{ props.item.codigo }}</td>
+                    <td>{{ props.item.categoria }}</td>
+                    <td>{{ props.item.stock }}</td>
+                    <td>{{ props.item.precio_venta }}</td>
                     <td>{{ props.item.descripcion }}</td>
                     <td>
                         <div v-if="props.item.condicion">
@@ -104,12 +120,15 @@
     export default {
         data() {
             return {
-                categories: [],
-
+                articulos: [],
                 dialog: false,
                 headers: [
                     { text: 'Acciones', value: 'acciones', sortable: false },
+                    { text: 'Código', value: 'codigo' },
                     { text: 'Nombre', value: 'nombre' },
+                    { text: 'Categoría', value: 'categoria' },
+                    { text: 'Stock', value: 'stock' },
+                    { text: 'Precio Venta', value: 'precio_venta' },
                     { text: 'Descripcion', value: 'descripcion', sortable: false },
                     { text: 'Estado', value: 'condicion', sortable: false }
                 ],
@@ -117,7 +136,12 @@
                 desserts: [],
                 editedIndex: -1,
                 id: '',
+                idcategoria: '',
+                categorias: [],
+                codigo: '',
                 nombre: '',
+                stock: 0,
+                precio_venta: 0,
                 descripcion: '',
                 valida: 0,
                 validaMensaje: [],
@@ -130,7 +154,7 @@
 
         computed: {
             formTitle () {
-                return this.editedIndex === -1 ? 'Nueva Categoría' : 'Actualizar Categoría'
+                return this.editedIndex === -1 ? 'Nuevo Artículo' : 'Actualizar Artículo'
             }
         },
 
@@ -142,28 +166,38 @@
 
         created () {
             this.list();
+            this.select();
         },
 
         methods: {
             list() {
-                axios.get('api/Categorias/Listar').then( res => {
-                    this.categories = res.data;
+                axios.get('api/Articulos/Listar').then( res => {
+                    this.articulos = res.data;
+                }).catch(err => {
+                    console.log(err)
+                });
+            },
+
+            select() {
+                axios.get('api/Categorias/Select').then( res => {
+                    this.categorias = res.data.map( categoria => (
+                        { text: categoria.nombre, value: categoria.idcategoria }
+                    ));
                 }).catch(err => {
                     console.log(err)
                 });
             },
 
             editItem (item) {
-                this.id = item.idcategoria;
+                this.id = item.idarticulo;
+                this.idcategoria = item.idcategoria;
+                this.codigo = item.codigo;
                 this.nombre = item.nombre;
+                this.stock = item.stock;
+                this.precio_venta = item.precio_venta;
                 this.descripcion = item.descripcion;
                 this.editedIndex = 1;
                 this.dialog = true;
-            },
-
-            deleteItem (item) {
-                const index = this.desserts.indexOf(item)
-                confirm('Are you sure you want to delete this item?') && this.desserts.splice(index, 1)
             },
 
             close () {
@@ -173,7 +207,11 @@
 
             clean() {
                 this.id = '';
+                this.idcategoria = '';
+                this.codigo = '';
                 this.nombre = '';
+                this.stock = 0;
+                this.precio_venta = 0;
                 this.descripcion = '';
                 this.editedIndex = -1;
             },
@@ -185,9 +223,13 @@
 
                 if (this.editedIndex > -1) {
                     // Edit
-                    axios.put('api/Categorias/Actualizar', {
-                        idcategoria: this.id,
+                    axios.put('api/Articulos/Actualizar', {
+                        idarticulo: this.id,
+                        idcategoria: this.idcategoria,
+                        codigo: this.codigo,
                         nombre: this.nombre,
+                        stock: this.stock,
+                        precio_venta: this.precio_venta,
                         descripcion: this.descripcion
                     }).then( res => {
                         this.close();
@@ -198,8 +240,12 @@
                     });
                 } else {
                     // Add
-                    axios.post('api/Categorias/Crear', {
+                    axios.post('api/Articulos/Crear', {
+                        idcategoria: this.idcategoria,
+                        codigo: this.codigo,
                         nombre: this.nombre,
+                        stock: this.stock,
+                        precio_venta: this.precio_venta,
                         descripcion: this.descripcion
                     }).then( res => {
                         this.close();
@@ -217,6 +263,15 @@
                 if ( this.nombre.length < 3 || this.nombre.length > 50 ) {
                     this.validaMensaje.push('El nombre debe tener más de 3 caracteres y menos de 50');
                 }
+                if ( !this.idcategoria) {
+                    this.validaMensaje.push('Seleccione una categoría');
+                }
+                if ( !this.stock ) {
+                    this.validaMensaje.push('Ingrese un stock válido');
+                }
+                if ( !this.precio_venta ) {
+                    this.validaMensaje.push('Ingrese un precio de venta válido');
+                }
                 if ( this.validaMensaje.length ) {
                     this.valida = 1;
                 }
@@ -226,7 +281,7 @@
             openAdModal(item) {
                 this.adModal = true;
                 this.adNombre = item.nombre;
-                this.adId = item.idcategoria;
+                this.adId = item.idarticulo;
                 this.adAction = item.condicion;
             },
 
@@ -235,7 +290,7 @@
             },
 
             activateDesactivate() {
-                axios.put(`api/Categorias/${this.adAction ? 'Desactivar' : 'Activar'}/${this.adId}`, {})
+                axios.put(`api/Articulos/${this.adAction ? 'Desactivar' : 'Activar'}/${this.adId}`, {})
                     .then( res => {
                         this.adModal = 0;
                         this.adAction = 0;
