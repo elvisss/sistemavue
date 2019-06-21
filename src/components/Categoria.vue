@@ -43,6 +43,19 @@
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
+                <v-dialog v-model="adModal" max-width="290px">
+                    <v-card>
+                        <v-card-title class="headline">¿{{ adAction ? 'Desa' : 'A' }}ctivar Item?</v-card-title>
+                        <v-card-text>
+                            Estás a punto de {{ adAction ? 'Des' : '' }}activar el ítem {{ adNombre }}
+                        </v-card-text>
+                        <v-card-actions>
+                            <v-spacer></v-spacer>
+                            <v-btn color="green darken-1" flat="flat" @click="closeAdModal">Cancelar</v-btn>
+                            <v-btn color="orange darken-4" flat="flat" @click="activateDesactivate">{{ adAction ? 'Desa' : 'A' }}ctivar</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
             </v-toolbar>
             <v-data-table
                 :headers="headers"
@@ -61,9 +74,9 @@
                         </v-icon>
                         <v-icon
                             small
-                            @click="deleteItem(props.item)"
+                            @click="openAdModal(props.item)"
                         >
-                            delete
+                            {{ props.item.condicion ? 'block' : 'check' }}
                         </v-icon>
                     </td>
                     <td>{{ props.item.nombre }}</td>
@@ -78,7 +91,7 @@
                     </td>
                 </template>
                 <template v-slot:no-data>
-                    <v-btn color="primary" @click="initialize">Resetear</v-btn>
+                    <v-btn color="primary" @click="list">Resetear</v-btn>
                 </template>
             </v-data-table>
         </v-flex>
@@ -103,18 +116,15 @@
                 search: '',
                 desserts: [],
                 editedIndex: -1,
-                editedItem: {
-                    name: '',
-                    calories: 0,
-                    fat: 0,
-                    carbs: 0,
-                    protein: 0
-                },
                 id: '',
                 nombre: '',
                 descripcion: '',
                 valida: 0,
-                validaMensaje: []
+                validaMensaje: [],
+                adModal: false,
+                adAction: false,
+                adNombre: '',
+                adId: ''
             }
         },
 
@@ -144,11 +154,11 @@
             },
 
             editItem (item) {
-                this.id = item.id;
+                this.id = item.idcategoria;
                 this.nombre = item.nombre;
                 this.descripcion = item.descripcion;
                 this.editedIndex = 1;
-                this.dialog = true
+                this.dialog = true;
             },
 
             deleteItem (item) {
@@ -158,12 +168,14 @@
 
             close () {
                 this.dialog = false;
+                this.clean();
             },
 
             clean() {
                 this.id = '';
                 this.nombre = '';
                 this.descripcion = '';
+                this.editedIndex = -1;
             },
 
             save () {
@@ -173,7 +185,8 @@
 
                 if (this.editedIndex > -1) {
                     // Edit
-                    axios.put('api/Categorias/Crear', {
+                    axios.put('api/Categorias/Actualizar', {
+                        idcategoria: this.id,
                         nombre: this.nombre,
                         descripcion: this.descripcion
                     }).then( res => {
@@ -208,6 +221,30 @@
                     this.valida = 1;
                 }
                 return this.valida;
+            },
+
+            openAdModal(item) {
+                this.adModal = true;
+                this.adNombre = item.nombre;
+                this.adId = item.idcategoria;
+                this.adAction = item.condicion;
+            },
+
+            closeAdModal() {
+                this.adModal = false;
+            },
+
+            activateDesactivate() {
+                axios.put(`api/Categorias/${this.adAction ? 'Desactivar' : 'Activar'}/${this.adId}`, {})
+                    .then( res => {
+                        this.adModal = 0;
+                        this.adAction = 0;
+                        this.adNombre = '';
+                        this.adId = '';
+                        this.list();
+                    }).catch( err => {
+                        console.log(err)
+                    });
             }
         }
     }
