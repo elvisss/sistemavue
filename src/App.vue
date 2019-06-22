@@ -5,6 +5,7 @@
       :clipped="$vuetify.breakpoint.lgAndUp"
       fixed
       app
+      v-if="logueado"
     >
       <v-list dense>
         <template>
@@ -17,7 +18,7 @@
             </v-list-tile-title>
           </v-list-tile>
         </template>
-        <template>
+        <template v-if="esAdministrador || esAlmacenero">
           <v-list-group>
             <template v-slot:activator>
               <v-list-tile>
@@ -50,7 +51,7 @@
             </v-list-tile>
           </v-list-group>
         </template>
-        <template>
+        <template v-if="esAdministrador || esAlmacenero">
           <v-list-group>
             <template v-slot:activator>
               <v-list-tile>
@@ -83,7 +84,7 @@
             </v-list-tile>
           </v-list-group>
         </template>
-        <template>
+        <template v-if="esAdministrador || esVendedor">
           <v-list-group>
             <template v-slot:activator>
               <v-list-tile>
@@ -116,7 +117,7 @@
             </v-list-tile>
           </v-list-group>
         </template>
-        <template>
+        <template v-if="esAdministrador">
           <v-list-group>
             <template v-slot:activator>
               <v-list-tile>
@@ -149,7 +150,7 @@
             </v-list-tile>
           </v-list-group>
         </template>
-        <template>
+        <template v-if="esAdministrador">
           <v-list-group>
             <template v-slot:activator>
               <v-list-tile>
@@ -196,8 +197,11 @@
         <span class="hidden-sm-and-down">Sistema</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn icon>
-        <v-icon>apps</v-icon>
+      <v-btn v-if="logueado" icon @click="salir">
+        <v-icon>logout</v-icon> Salir
+      </v-btn>
+      <v-btn :to="{ name: 'login' }" v-else>
+        <v-icon>apps</v-icon> Login
       </v-btn>
     </v-toolbar>
     <v-content>
@@ -229,6 +233,28 @@ export default {
   data () {
     return {
       drawer: null
+    }
+  },
+  computed: {
+    logueado() {
+      return this.$store.state.usuario;
+    },
+    esAdministrador() {
+      return this.$store.state.usuario && this.$store.state.usuario.rol === 'Administrador';
+    },
+    esAlmacenero() {
+      return this.$store.state.usuario && this.$store.state.usuario.rol === 'Almacenero';
+    },
+    esVendedor() {
+      return this.$store.state.usuario && this.$store.state.usuario.rol === 'Vendedor';
+    }
+  },
+  created() {
+    this.$store.dispatch("autologin");
+  },
+  methods: {
+    salir() {
+      this.$store.dispatch("salir");
     }
   }
 }
