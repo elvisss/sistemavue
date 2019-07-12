@@ -8,6 +8,7 @@ import Usuario from './components/Usuario.vue'
 import Cliente from './components/Cliente.vue'
 import Proveedor from './components/Proveedor.vue'
 import Login from './components/Login.vue'
+import Ingreso from './components/Ingreso.vue'
 import store from './store'
 
 Vue.use(Router)
@@ -39,6 +40,15 @@ var router = new Router({
       path: '/articulos',
       name: 'articulos',
       component: Articulo,
+      meta: {
+        administrador: true,
+        almacenero: true
+      }
+    },
+    {
+      path: '/ingresos',
+      name: 'ingresos',
+      component: Ingreso,
       meta: {
         administrador: true,
         almacenero: true
