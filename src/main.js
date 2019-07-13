@@ -6,7 +6,7 @@ import store from './store'
 import axios from 'axios'
 
 Vue.config.productionTip = false
-axios.defaults.baseURL = 'http://localhost:57116/'
+axios.defaults.baseURL = process.env.NODE_ENV === 'production' ? 'http://www.sisventas.com/' : 'http://localhost:57116/'
 axios.interceptors.request.use(
   config => {
     if (!config.headers.Authorization) {
